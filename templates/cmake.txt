@@ -1,0 +1,54 @@
+<% 
+  cmake_module_name = metadata['name'].lower().replace(' ', '_').replace('-', '_')
+%>
+function(use_block_${cmake_module_name} packageName)
+
+  # Source Files
+  list(APPEND SRC_FILES
+    % for source in platforms['*']['source']:
+      ${"${CMAKE_SOURCE_DIR}"}/${source['path']}
+    % endfor
+  )
+
+  # Header Files
+  list(APPEND HDR_FILES
+    % for source in platforms['*']['headers']:
+      ${"${CMAKE_SOURCE_DIR}"}/${source['path']}
+    % endfor
+  )
+
+  # Include Files
+  <%
+     SystemIncludes = []
+     NormalIncludes = []
+
+     for source in platforms['*']['include_paths']:
+         if source.get('system', '') == 'true':
+         	SystemIncludes.append(source['path'])
+         else:
+         	NormalIncludes.append(source['path'])
+  %>
+  % if SystemIncludes:
+	  include_directories(SYSTEM
+	    % for source in SystemIncludes:
+	      ${"${CMAKE_SOURCE_DIR}"}/${source}
+	    % endfor
+	  )  
+  % endif
+  % if NormalIncludes:
+      include_directories(
+        % for source in NormalIncludes:
+          ${"${CMAKE_SOURCE_DIR}"}/${source}
+        % endfor
+      )
+  % endif
+
+  % if 'macosx' in platforms or 'osx' in platforms:
+  <%include file="osx.txt" />
+  % endif 
+
+  set(HDR_FILES ${"${HDR_FILES}"} PARENT_SCOPE)
+  set(SRC_FILES ${"${SRC_FILES}"} PARENT_SCOPE)
+  set(EXTRA_LIBS ${"${EXTRA_LIBS}"} PARENT_SCOPE)
+  set(STATIC_LIBS ${"${STATIC_LIBS}"} PARENT_SCOPE)
+endfunction(use_block_${cmake_module_name})

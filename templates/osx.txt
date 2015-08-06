@@ -1,0 +1,29 @@
+<% configs = platforms.get('macosx', platforms.get('osx', None)) %>
+if(APPLE)
+
+# frameworks
+% for framework in configs['framework']:
+% if 'sdk' in framework and framework['sdk'] == 'true':
+<% library_name = framework['path'].split('.')[0] %>
+FIND_LIBRARY(${library_name}_LIBRARY ${library_name})
+list(APPEND EXTRA_LIBS ${"${"}${library_name}_LIBRARY})
+% else:
+# Unsure how to handle non-sdk frameworks: ${framework}
+% endif
+% endfor
+
+# static libraries
+
+% for staticlib in configs['static_libraries']:
+	<%
+	  import os.path as path
+
+	  base_name = path.basename(staticlib['path'])
+	  library_name, _ = base_name.replace('.', '-').split('-', 1)
+
+	%>
+	find_library(${library_name}_LIBRARY ${base_name} HINTS "${staticlib['path']}")
+	LIST(APPEND STATIC_LIBS ${"${"}${library_name}_LIBRARY})
+% endfor
+
+endif()
